@@ -9,6 +9,7 @@ import Dashboard from './routes/Dashboard';
 import Posts from './routes/Posts';
 import { CredentialsContext } from './context/CredentialsContext';
 import Login from './routes/Login';
+import Signup from './routes/Signup';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -24,6 +25,7 @@ const ComponentToRender = () => {
             <Route path="dashboard" element={<Dashboard/>}/>
           </Route>
           <Route path="login" element={<Login/>}/>
+          <Route path="signup" element={<Signup/>}/>
         </Routes>
       </BrowserRouter>
     </CredentialsContext.Provider>
