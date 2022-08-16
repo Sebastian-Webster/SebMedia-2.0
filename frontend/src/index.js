@@ -5,30 +5,50 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './routes/Home';
-import Dashboard from './routes/Dashboard';
+import Profile from './routes/Profile';
 import Posts from './routes/Posts';
 import { CredentialsContext } from './context/CredentialsContext';
 import Login from './routes/Login';
 import Signup from './routes/Signup';
+import PageNotFound from './routes/PageNotFound';
+import Settings from './routes/Settings';
+import CreateTextPost from './routes/CreateTextPost';
+import { DarkModeContext } from './context/DarkModeContext';
+import CreateImagePost from './routes/CreateImagePost';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
 const ComponentToRender = () => {
-  const [storedCredentials, setStoredCredentials] = useState(null);
+  const [storedCredentials, setStoredCredentials] = useState(JSON.parse(localStorage.getItem('SebMediaCredentials')));
+  const [darkMode, setDarkMode] = useState(/*window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : true*/false)
+
+  window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    //setDarkMode(event.matches)
+});
+
   return (
-    <CredentialsContext.Provider value={{storedCredentials, setStoredCredentials}}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<App/>}>
-            <Route path="home" element={<Home/>}/>
-            <Route path="posts" element={<Posts/>}/>
-            <Route path="dashboard" element={<Dashboard/>}/>
-          </Route>
-          <Route path="login" element={<Login/>}/>
-          <Route path="signup" element={<Signup/>}/>
-        </Routes>
-      </BrowserRouter>
-    </CredentialsContext.Provider>
+    <div style={{height: '100vh', backgroundColor: darkMode ? 'black' : 'white', color: darkMode ? 'white' : 'black'}}>
+      <CredentialsContext.Provider value={{storedCredentials, setStoredCredentials}}>
+        <DarkModeContext.Provider value={{darkMode, setDarkMode}}>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<App/>}>
+                <Route path="home" element={<Home/>}/>
+                <Route path="posts" element={<Posts/>}>
+                  <Route path="createTextPost" element={<CreateTextPost/>}/>
+                  <Route path="createImagePost" element={<CreateImagePost/>}/>
+                </Route>
+                <Route path="profile" element={<Profile/>}/>
+                <Route path="settings" element={<Settings/>}/>
+              </Route>
+              <Route path="login" element={<Login/>}/>
+              <Route path="signup" element={<Signup/>}/>
+              <Route path="*" element={<PageNotFound/>}/>
+            </Routes>
+          </BrowserRouter>
+        </DarkModeContext.Provider>
+      </CredentialsContext.Provider>
+    </div>
   )
 }
 

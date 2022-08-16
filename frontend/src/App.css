@@ -17,6 +17,10 @@ header > div {
     height: 100%;
 }
 
+header div:first-child {
+    justify-content: left;
+}
+
 a {
     font-size: 30pt;
 }

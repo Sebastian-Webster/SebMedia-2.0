@@ -1,11 +1,8 @@
 const User = require('../models/User')
+const TextPost = require('../models/TextPost');
 const bcrypt = require('bcrypt')
 
 class UserLibrary {
-    #log(log) {
-        console.log(log)
-    }
-
     login = async (email) => {
         try {
             return await User.findOne({email})
@@ -14,33 +11,24 @@ class UserLibrary {
         } 
     }
 
-    hashPassword(password) {
-        const saltRounds = 12;
-        let hashedPassword;
+    hashPassword = async (password) => {
+        const saltRounds = 16;
 
-        bcrypt.hash(password, saltRounds).then(hash => {
-            hashedPassword = hash;
-        }).catch(error => {
-            hashedPassword = {
-                error
-            }
-        })
-
-        return hashedPassword;
+        try {
+            return await bcrypt.hash(password, saltRounds)
+        } catch (error) {
+            return {error}
+        }
     }
 
-    createAccount(accountObj) {
+    createAccount = async (accountObj) => {
         const newUser = new User(accountObj)
 
-        let result;
-
-        newUser.save().then(result => {
-            result = result;
-        }).catch((error) => {
-            result = {error}
-        })
-
-        return result;
+        try {
+            return newUser.save()
+        } catch (error) {
+            return {error}
+        }
     }
 
     findUserByEmail = async (email) => {
@@ -57,6 +45,16 @@ class UserLibrary {
         } catch (error) {
             return {error}
         }
+    }
+
+    uploadTextPost = (postObj) => {
+        const newTextPost = new TextPost(postObj)
+
+        return new Promise((resolve, reject) => {
+            newTextPost.save()
+            .then(result => resolve(result))
+            .catch(error => reject(error))
+        })
     }
 }
 

@@ -1,8 +1,8 @@
 class HTTPHandler {
-    BadInput(res, message) {
+    BadInput(res, error) {
         res.status(400).json({
             status: "FAILED",
-            message
+            error
         })
     }
 
