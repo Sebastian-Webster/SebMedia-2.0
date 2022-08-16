@@ -1,6 +1,7 @@
 const User = require('../models/User')
 const TextPost = require('../models/TextPost');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
+const ImagePost = require('../models/ImagePost');
 
 class UserLibrary {
     login = async (email) => {
@@ -53,6 +54,24 @@ class UserLibrary {
         return new Promise((resolve, reject) => {
             newTextPost.save()
             .then(result => resolve(result))
+            .catch(error => reject(error))
+        })
+    }
+
+    uploadImagePost = (postObj) => {
+        const newImagePost = new ImagePost(postObj)
+
+        return new Promise((resolve, reject) => {
+            newImagePost.save()
+            .then(result => resolve(result))
+            .catch(error => reject(error))
+        })
+    }
+
+    updateProfileImage = (userId, filename) => {
+        return new Promise((resolve, reject) => {
+            User.findOneAndUpdate({_id: userId}, {profileImageKey: filename})
+            .then(() => resolve(filename))
             .catch(error => reject(error))
         })
     }

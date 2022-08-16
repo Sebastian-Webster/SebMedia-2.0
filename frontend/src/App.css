@@ -21,8 +21,9 @@ header div:first-child {
     justify-content: left;
 }
 
-a {
+a, a:visited {
     font-size: 30pt;
+    color: blue;
 }
 
 a.active, a:focus, a:active {

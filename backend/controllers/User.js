@@ -3,10 +3,12 @@ const UserLibrary = require('../libraries/User')
 const HTTPHandler = require('../libraries/HTTPHandler')
 const LoggerLibrary = require('../libraries/Logger')
 const TextPostLibrary = require('../libraries/TextPost');
+const ImagePostLibrary = require('../libraries/ImagePost')
 const user = new UserLibrary()
 const http = new HTTPHandler()
 const logger = new LoggerLibrary();
 const TextPost = new TextPostLibrary();
+const ImagePost = new ImagePostLibrary();
 const bcrypt = require('bcrypt')
 
 const login = async (req, res) => {
@@ -51,7 +53,8 @@ const login = async (req, res) => {
                 name: LoginResponse.name,
                 followers: LoginResponse.followers,
                 following: LoginResponse.following,
-                _id: LoginResponse._id
+                _id: LoginResponse._id,
+                profileImageKey: LoginResponse.profileImageKey
             })
         } else {
             http.BadInput(res, 'Wrong password.')
@@ -270,9 +273,130 @@ const getTextPostsByUserName = async (req, res) => {
     })
 }
 
+const uploadImagePost = async (req, res) => {
+    if (!req.file) {
+        http.BadInput(res, 'No file received.')
+        return
+    }
+
+    let title, body, userId;
+    title = req?.body?.title;
+    body = req?.body?.body
+    userId = req?.body?.userId
+
+    if (!isValidObjectId(userId)) {
+        http.BadInput(res, 'userId is not a valid objectId')
+        return
+    }
+
+    if (typeof title !== 'string') {
+        http.BadInput(res, 'Title must be a string')
+        return
+    }
+
+    if (typeof body !== 'string') {
+        http.BadInput(res, 'Body must be a string')
+        return
+    }
+
+    title = title.trim()
+    body = body.trim()
+
+    if (title.length < 1) {
+        http.BadInput(res, 'Title cannot be an empty string')
+        return
+    }
+
+    if (body.length < 1) {
+        http.BadInput(res, 'Body cannot be an empty string')
+        return
+    }
+
+    const postObj = {
+        title,
+        body,
+        creatorId: userId,
+        datePosted: Date.now(),
+        imageKey: req.file.filename
+    }
+
+    user.uploadImagePost(postObj)
+    .then(() => {
+        http.OK(res, 'Post successfully uploaded')
+    })
+    .catch(error => {
+        http.ServerError(res, 'An error occured while uploading image post. Please try again later.')
+        logger.error(error)
+    })
+}
+
+const getImagePostsByUserName = async (req, res) => {
+    const limit = 20;
+    let {username, skip = 0} = req.query;
+
+    if (typeof username !== 'string') {
+        http.BadInput(res, 'Username must be a string')
+        return
+    }
+
+    skip = parseInt(skip)
+
+    if (skip === NaN) {
+        http.BadInput(res, 'Skip must be a number or not specified')
+        return
+    }
+
+    const foundUserByName = await user.findUserByName(username);
+
+    if (foundUserByName === null) {
+        http.BadInput(res, 'User not found.')
+        return
+    }
+
+    if (foundUserByName.error) {
+        http.ServerError(res, 'An error occured while fetching image posts. Please try again later.')
+        logger.error(foundUserByName.error)
+        return
+    }
+
+    ImagePost.findPostsByCreatorId(foundUserByName._id, limit, skip).then(result => {
+        //Get rid of object IDs
+        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, imageKey: post.imageKey}))
+        http.OK(res, 'Successfully found posts', cleanedResult)
+    }).catch(error => {
+        http.ServerError(res, 'An error occured while fetching image posts. Please try again later.')
+        logger.error(error)
+    })
+}
+
+const updateProfileImage = (req, res) => {
+    const userId = req.body._id;
+    if (!req.file) {
+        http.BadInput(res, 'No file received.')
+        return
+    }
+
+    if (!isValidObjectId(userId)) {
+        http.BadInput(res, '_id is not a valid user ID.')
+        return
+    }
+
+    user.updateProfileImage(userId, req.file.filename)
+    .then(() => {
+        http.OK(res, 'Successfully updated profile image.', req.file.filename)
+    })
+    .catch(error => {
+        http.ServerError(res, 'An error occured while updating profile image. Please try again later.')
+        logger.error(error)
+    })
+}
+
 module.exports = {
     login,
     signup,
     uploadTextPost,
-    getTextPostsByUserName
+    getTextPostsByUserName,
+    uploadImagePost,
+    getImagePostsByUserName,
+    updateProfileImage
 }

@@ -1,10 +1,14 @@
-import React, {useRef, useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import { CredentialsContext } from '../context/CredentialsContext';
 import useInput from '../hooks/useInput';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
-var {v4: uuidv4} = require('uuid')
+import { Box, CircularProgress, TextField, Grid } from '@mui/material';
+import { useFilePicker } from 'use-file-picker';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import Fab from '@mui/material/Fab';
+import ImagePost from '../components/ImagePost';
 
 const CreateImagePost = () => {
     const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
@@ -14,8 +18,8 @@ const CreateImagePost = () => {
     const [error, setError] = useState(null)
     const [title, bindTitle] = useInput('', 'title')
     const [body, bindBody] = useInput('', 'body')
-    const imageRef = useRef(null)
     const navigate = useNavigate();
+    const [openFilePicker, { plainFiles: imageToUpload }] = useFilePicker({accept: 'image/jpeg', multiple: false})
 
     const uploadImagePost = (e) => {
         e.preventDefault()
@@ -24,11 +28,7 @@ const CreateImagePost = () => {
 
         const toSend = new FormData();
 
-        toSend.append('image', {
-            name: uuidv4(),
-            uri: imagePreview,
-            type: 'image/jpg'
-        })
+        toSend.append('image', imageToUpload[0])
         toSend.append('title', title)
         toSend.append('body', body)
         toSend.append('userId', _id)
@@ -47,30 +47,64 @@ const CreateImagePost = () => {
         })
     }
 
-    const updateImagePreview = () => {
-        var file = imageRef.current.files[0];
-        var reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = (e) => {
-            setImagePreview(reader.result)
+    useEffect(() => {
+        if (imageToUpload[0]) {
+            var file = imageToUpload[0]
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = (e) => {
+                setImagePreview(reader.result)
+            }
         }
-    }
+    }, [imageToUpload])
 
     return (
         <>
+            <h1>Create Image Post</h1>
             {loading ? 
                 <Box sx={{display: 'flex', justifyContent: 'center'}}>
                     <CircularProgress/>
                 </Box>
             :
-                <form onSubmit={uploadImagePost} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'}}>
-                    <input {...bindTitle}/>
-                    <input {...bindBody}/>
-                    {imagePreview && <img src={imagePreview} style={{maxWidth: '30vh', maxHeight: '30vh'}}/>}
-                    <input type="file" id="image" name="image" accept="image/jpeg" onChange={updateImagePreview} ref={imageRef}/>
-                    <input type="submit" value='Submit'/>
-                    {error && <p style={{color: 'red'}}>{error}</p>}
-                </form>
+                <>
+                    <form onSubmit={uploadImagePost} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column'}}>
+                        <TextField {...bindTitle}/>
+                        <TextField {...bindBody} multiline style={{marginBottom: 10}}/>
+                        <Fab color="secondary" aria-label="add" variant="extended" onClick={openFilePicker}>
+                            {imagePreview ?
+                                <>
+                                    <EditIcon />
+                                    Change Image
+                                </>
+                            :
+                                <>
+                                    <AddIcon />
+                                    Image
+                                </>
+                            }
+                        </Fab>
+                        {title && body && imagePreview &&
+                            <Fab color="primary" aria-label="submit" type="submit" variant="extended" sx={{mt: 2}}>
+                                <AddIcon />
+                                Submit
+                            </Fab>
+                        }
+                        {error && <p style={{color: 'red'}}>{error}</p>}
+                    </form>
+                    <h2>Preview:</h2>
+                    {title && body && imagePreview ?
+                        <Grid container sx={{justifyContent: 'center'}}>
+                            <ImagePost title={title} body={body} previewImage={imagePreview}/>
+                        </Grid>
+                    :
+                        <>
+                            <h2>Preview is waiting for a title, body, AND image</h2>
+                            <Box sx={{justifyContent: 'center'}}>
+                                <CircularProgress/>
+                            </Box>
+                        </>
+                    }
+                </>
             }
         </>
     )

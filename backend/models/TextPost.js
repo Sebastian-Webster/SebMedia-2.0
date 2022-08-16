@@ -5,7 +5,7 @@ const TextPostSchema = new Schema({
     creatorId: mongoose.Schema.Types.ObjectId,
     title: String,
     body: String,
-    datePosted: Object
+    datePosted: Number
 })
 
 const TextPost = mongoose.model('TextPost', TextPostSchema)

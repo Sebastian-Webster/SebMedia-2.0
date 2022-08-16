@@ -1,19 +1,29 @@
 import React, {useContext, useState} from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CredentialsContext } from '../context/CredentialsContext';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link'
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { DarkModeContext } from '../context/DarkModeContext';
+import useComponent from '../hooks/useComponent';
 
 const Signup = () => {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [rememberMe, setRememberMe] = useState(true)
     const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext)
+    const {darkMode, setDarkMode} = useContext(DarkModeContext)
     const navigate = useNavigate()
+    const theme = createTheme();
+    const { StyledTextField } = useComponent();
 
     const handleSignup = (e) => {
         e.preventDefault();
@@ -22,11 +32,13 @@ const Signup = () => {
         setError(null)
 
         const url = 'http://localhost:8080/user/signup';
+        const data = new FormData(e.currentTarget)
         const toSend = {
-            email: email,
-            password: password,
-            name: name
+            email: data.get('email'),
+            password: data.get('password'),
+            name: data.get('name')
         }
+
         axios.post(url, toSend).then(result => {
             setLoading(false)
             setStoredCredentials(result.data.data)
@@ -48,20 +60,84 @@ const Signup = () => {
                 </Box>
             :
                 <>
-                    <h3>Signup here...</h3>
-                    <form onSubmit={handleSignup}>
-                        <label htmlFor="name">Name:</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} name="name"/>
-                        <label htmlFor="email">Email:</label>
-                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} name="email"/>
-                        <label htmlFor="password">Password: </label>
-                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} name="password"/>
-                        <label htmlFor='rememberMe'>Remember Me</label>
-                        <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} name="rememberMe"/>
-                        <input type="submit" value='Signup'/>
-                        {error && <p style={{color: 'red', textAlign: 'center'}}>{error}</p>}
-                    </form>
-                    <h1>You may want to <Link to='/login'>login instead</Link></h1>
+                    <ThemeProvider theme={theme}>
+                        <Container component="main" maxWidth="xs">
+                            <CssBaseline />
+                            <Box
+                                sx={{
+                                    marginTop: 8,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Typography component="h1" variant="h5">
+                                    Signup
+                                </Typography>
+                                <Box component="form" onSubmit={handleSignup} noValidate sx={{ mt: 1 }}>
+                                    <StyledTextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="name"
+                                    label="Username"
+                                    name="name"
+                                    autoFocus
+                                    InputLabelProps={{
+                                        style: {
+                                            color: darkMode ? 'white' : 'dark'
+                                        }
+                                    }}
+                                    />
+                                    <StyledTextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="email"
+                                    label="Email Address"
+                                    name="email"
+                                    autoComplete="email"
+                                    InputLabelProps={{
+                                        style: {
+                                            color: darkMode ? 'white' : 'dark'
+                                        }
+                                    }}
+                                    />
+                                    <StyledTextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    name="password"
+                                    label="Password"
+                                    type="password"
+                                    id="password"
+                                    autoComplete="current-password"
+                                    InputLabelProps={{
+                                        style: {
+                                            color: darkMode ? 'white' : 'dark'
+                                        }
+                                    }}
+                                    />
+                                    <FormControlLabel
+                                    control={<Checkbox value="remember" color="primary" defaultChecked onChange={(e) => setRememberMe(e.target.checked)}/>}
+                                    label="Remember me"
+                                    />
+                                    {error && <Typography component="h1" variant="h6" sx={{color: 'red', textAlign: 'center'}}>{error}</Typography>}
+                                    <Button
+                                    type="submit"
+                                    fullWidth
+                                    variant="contained"
+                                    sx={{ mt: 3, mb: 2 }}
+                                    >
+                                    Signup
+                                    </Button>
+                                    <Box sx={{display: 'flex', justifyContent: 'center'}}>
+                                        <Link variant='h5' onClick={() => navigate('/login')} sx={{cursor: 'pointer'}}>Already have an account? Login</Link>
+                                    </Box>
+                                </Box>
+                            </Box>
+                        </Container>
+                    </ThemeProvider>
                 </>
             }
         </div>

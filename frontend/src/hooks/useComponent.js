@@ -1,5 +1,7 @@
 import { useContext } from "react";
 import { DarkModeContext } from "../context/DarkModeContext";
+import { styled } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
 
 const useComponent = () => {
     const {darkMode, setDarkMode} = useContext(DarkModeContext);
@@ -20,12 +22,58 @@ const useComponent = () => {
 
     const Div = (props) => <div style={{backgroundColor: darkMode ? 'black' : 'white', color: darkMode ? 'white' : 'black', ...props.style}}>{props.children}</div>
 
+    const StyledTextField = styled(TextField)({
+        '& label.Mui-focused': {
+            color: darkMode ? 'white' : 'black'
+        },
+        '& .MuiInput-underline:after': {
+            borderBottomColor: darkMode ? 'white' : 'black'
+        },
+        '& .MuiOutlinedInput-root' : {
+            color: darkMode ? 'white' : 'black',
+            '& fieldset': {
+                color: darkMode ? 'white' : 'black',
+                borderColor: darkMode ? 'white' : 'black'
+            },
+            '&:hover fieldset': {
+                borderColor: darkMode ? 'white' : 'black'
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: darkMode ? 'white' : 'black'
+            }
+        }
+    })
+
+    const StyledTextFieldStylesObject = {
+        '& label.Mui-focused': {
+            color: darkMode ? 'white' : 'black'
+        },
+        '& .MuiInput-underline:after': {
+            borderBottomColor: darkMode ? 'white' : 'black'
+        },
+        '& .MuiOutlinedInput-root' : {
+            color: darkMode ? 'white' : 'black',
+            '& fieldset': {
+                color: darkMode ? 'white' : 'black',
+                borderColor: darkMode ? 'white' : 'black'
+            },
+            '&:hover fieldset': {
+                borderColor: darkMode ? 'white' : 'black'
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: darkMode ? 'white' : 'black'
+            }
+        }
+    }
+
     return {
         FlexRowCentreDiv,
         FlexColumnCentreDiv,
         FlexRowSpaceAroundDiv,
         H3NoMargin,
-        Div
+        Div,
+        StyledTextField,
+        StyledTextFieldStylesObject
     }
 }
 

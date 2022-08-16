@@ -6,7 +6,8 @@ const UserSchema = new Schema({
     email: String,
     password: String,
     followers: Array,
-    following: Array
+    following: Array,
+    profileImageKey: String
 })
 
 const User = mongoose.model('User', UserSchema);
