@@ -18,6 +18,14 @@ class TextPostLibrary {
             })
         })
     }
+
+    likePost = (postId, userPublicId) => {
+        //Coming soon
+    }
+
+    unlikePost = (postId, userPublicId) => {
+        //Coming soon
+    }
 }
 
 module.exports = TextPostLibrary;
