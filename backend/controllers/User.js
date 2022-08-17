@@ -4,6 +4,7 @@ const HTTPHandler = require('../libraries/HTTPHandler')
 const LoggerLibrary = require('../libraries/Logger')
 const TextPostLibrary = require('../libraries/TextPost');
 const ImagePostLibrary = require('../libraries/ImagePost')
+const {v4: uuidv4} = require('uuid')
 const user = new UserLibrary()
 const http = new HTTPHandler()
 const logger = new LoggerLibrary();
@@ -54,7 +55,8 @@ const login = async (req, res) => {
                 followers: LoginResponse.followers,
                 following: LoginResponse.following,
                 _id: LoginResponse._id,
-                profileImageKey: LoginResponse.profileImageKey
+                profileImageKey: LoginResponse.profileImageKey,
+                publicId: LoginResponse._publicId
             })
         } else {
             http.BadInput(res, 'Wrong password.')
@@ -155,7 +157,8 @@ const signup = async (req, res) => {
         password: hashedPassword,
         email: email,
         followers: [],
-        following: []
+        following: [],
+        publicId: uuidv4()
     }
 
     const newUserResponse = await user.createAccount(newUserObject)

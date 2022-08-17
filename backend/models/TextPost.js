@@ -5,7 +5,8 @@ const TextPostSchema = new Schema({
     creatorId: mongoose.Schema.Types.ObjectId,
     title: String,
     body: String,
-    datePosted: Number
+    datePosted: Number,
+    likes: {type: Array, default: []}
 })
 
 const TextPost = mongoose.model('TextPost', TextPostSchema)

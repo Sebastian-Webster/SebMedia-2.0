@@ -5,7 +5,6 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { CredentialsContext } from './context/CredentialsContext';
 import PageNotFound from './routes/PageNotFound';
-import Settings from './routes/Settings';
 import { DarkModeContext } from './context/DarkModeContext';
 import CircularProgress from '@mui/material/CircularProgress';
 

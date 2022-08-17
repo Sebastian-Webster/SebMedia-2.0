@@ -45,7 +45,7 @@ const Profile = () => {
                             const newTextPosts = Array.isArray(posts) ? _.cloneDeep(posts) : []
                             newTextPosts.push(...result)
                             return newTextPosts
-                        } else return posts
+                        } else return Array.isArray(posts) ? [...result, ...posts] : []
                     })
                     setLoadingTextPosts(false)
                     setLoadingTextPostsError(null)
@@ -71,13 +71,13 @@ const Profile = () => {
                             const newImagePosts = Array.isArray(posts) ? _.cloneDeep(posts) : []
                             newImagePosts.push(...result)
                             return newImagePosts
-                        } else return posts
+                        } else return Array.isArray(posts) ? [...result, ...posts] : []
                     })
                     setLoadingImagePosts(false)
                     setLoadingImagePostsError(null)
                 }).catch(error => {
                     setLoadingImagePosts(false)
-                    setLoadingTextPostsError(error?.response?.data?.error || String(error))
+                    setLoadingImagePostsError(error?.response?.data?.error || String(error))
                     console.error(error)
                 })
             }

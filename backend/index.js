@@ -1,6 +1,10 @@
 //Initialize connection to MongoDB Atlas database
 require('./config/db')
 
+//One time code
+//require('./oneTimeCode/addUserPublicIds')
+//require('./oneTimeCode/addPostLikes')
+
 var express = require('express')
 var cors = require('cors')
 const path = require('path')

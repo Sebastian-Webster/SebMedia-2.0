@@ -6,7 +6,8 @@ const ImagePostSchema = new Schema({
     imageKey: String,
     title: String,
     body: String,
-    datePosted: Number
+    datePosted: Number,
+    likes: {type: Array, default: []}
 })
 
 const ImagePost = mongoose.model('ImagePost', ImagePostSchema)
