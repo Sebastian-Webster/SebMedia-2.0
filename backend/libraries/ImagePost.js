@@ -18,6 +18,14 @@ class ImagePostLibrary {
             })
         })
     }
+
+    likePost = (postId, userPublicId) => {
+        //Coming soon
+    }
+
+    unlikePost = (postId, userPublicId) => {
+        //Coming soon
+    }
 }
 
 module.exports = ImagePostLibrary;

@@ -239,10 +239,20 @@ const uploadTextPost = (req, res) => {
 
 const getTextPostsByUserName = async (req, res) => {
     const limit = 20;
-    let {username, skip = 0} = req.query;
+    let {username, skip = 0, publicId} = req.query;
 
     if (typeof username !== 'string') {
         http.BadInput(res, 'Username must be a string')
+        return
+    }
+
+    if (typeof publicId !== 'string') {
+        http.BadInput(res, 'publicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(publicId)) {
+        http.BadInput(res, 'publicId is not a valid object id')
         return
     }
 
@@ -254,8 +264,14 @@ const getTextPostsByUserName = async (req, res) => {
     }
 
     const foundUserByName = await user.findUserByName(username);
+    const foundUserByPublicId = await user.findUserByPublicId(publicId)
 
     if (foundUserByName === null) {
+        http.BadInput(res, 'User not found.')
+        return
+    }
+
+    if (foundUserByPublicId === null) {
         http.BadInput(res, 'User not found.')
         return
     }
@@ -266,9 +282,15 @@ const getTextPostsByUserName = async (req, res) => {
         return
     }
 
-    TextPost.findPostsByCreatorId(foundUserByName._id, limit, skip).then(result => {
+    if (foundUserByPublicId.error) {
+        http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
+        logger.error(foundUserByPublicId.error)
+        return
+    }
+
+    TextPost.findPostsByCreatorId(foundUserByName._id, limit, skip, publicId).then(result => {
         //Get rid of object IDs
-        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted}))
+        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, liked: post.liked}))
         http.OK(res, 'Successfully found posts', cleanedResult)
     }).catch(error => {
         http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
@@ -335,11 +357,20 @@ const uploadImagePost = async (req, res) => {
 
 const getImagePostsByUserName = async (req, res) => {
     const limit = 20;
-    let {username, skip = 0} = req.query;
+    let {username, skip = 0, publicId} = req.query;
 
     if (typeof username !== 'string') {
         http.BadInput(res, 'Username must be a string')
         return
+    }
+
+    if (typeof publicId !== 'string') {
+        http.BadInput(res, 'publicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(publicId)) {
+        http.BadInput(res, 'publicId is not a valid object id')
     }
 
     skip = parseInt(skip)
@@ -350,8 +381,14 @@ const getImagePostsByUserName = async (req, res) => {
     }
 
     const foundUserByName = await user.findUserByName(username);
+    const foundUserByPublicId = await user.findUserByPublicId(publicId)
 
     if (foundUserByName === null) {
+        http.BadInput(res, 'User not found.')
+        return
+    }
+
+    if (foundUserByPublicId === null) {
         http.BadInput(res, 'User not found.')
         return
     }
@@ -362,9 +399,14 @@ const getImagePostsByUserName = async (req, res) => {
         return
     }
 
-    ImagePost.findPostsByCreatorId(foundUserByName._id, limit, skip).then(result => {
+    if (foundUserByPublicId.error) {
+        http.ServerError(res, 'An error ocucred while fetching image posts. Please try again later.')
+        logger.error(foundUserByPublicId.error)
+    }
+
+    ImagePost.findPostsByCreatorId(foundUserByName._id, limit, skip, publicId).then(result => {
         //Get rid of object IDs
-        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, imageKey: post.imageKey}))
+        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, imageKey: post.imageKey, liked: post.liked}))
         http.OK(res, 'Successfully found posts', cleanedResult)
     }).catch(error => {
         http.ServerError(res, 'An error occured while fetching image posts. Please try again later.')

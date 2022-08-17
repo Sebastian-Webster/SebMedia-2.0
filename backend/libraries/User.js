@@ -48,6 +48,14 @@ class UserLibrary {
         }
     }
 
+    findUserByPublicId = async(publicId) => {
+        try {
+            return await User.findOne({publicId})
+        } catch (error) {
+            return {error}
+        }
+    }
+
     uploadTextPost = (postObj) => {
         const newTextPost = new TextPost(postObj)
 

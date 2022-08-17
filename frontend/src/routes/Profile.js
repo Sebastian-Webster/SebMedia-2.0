@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect, useMemo, Fragment} from 'react';
+import React, {useContext, useState, useEffect, useMemo, Fragment, useReducer} from 'react';
 import { CredentialsContext } from '../context/CredentialsContext';
 import useComponent from '../hooks/useComponent';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -15,70 +15,112 @@ import { DarkModeContext } from '../context/DarkModeContext';
 
 var _ = require('lodash')
 
+const textPostReducer = (state, action) => {
+    switch(action.type) {
+        case 'error':
+            console.error(action.error)
+            return {...state, error: action.error, loading: false}
+        case 'nowLoading':
+            return {...state, loading: true, error: null}
+        case 'addPosts':
+            console.log(action.result)
+            if (Array.isArray(action.result) && action.result.length > 0) {
+                const newTextPosts = Array.isArray(state.posts) ? _.cloneDeep(state.posts) : []
+                newTextPosts.push(...action.result)
+                return {...state, posts: newTextPosts, loading: false, error: null}
+            } else return Array.isArray(state.posts) ? {...state, posts: [...action.result, ...state.posts], loading: false, error: null} : {...state, posts: []}
+        case 'likePost':
+
+        case 'unlikePost':
+
+        default:
+            throw new Error((action.type + ' is not a valid action for textPostReducer'))
+    }
+}
+
+const textPostReducerInitialState = {
+    posts: null,
+    error: null,
+    loading: false
+}
+
+const imagePostReducer = (state, action) => {
+    switch(action.type) {
+        case 'error':
+            console.error(action.error)
+            return {...state, error: action.error, loading: false}
+        case 'nowLoading':
+            return {...state, loading: true, error: null}
+        case 'addPosts':
+            console.log(action.result)
+            if (Array.isArray(action.result) && action.result.length > 0) {
+                const newTextPosts = Array.isArray(state.posts) ? _.cloneDeep(state.posts) : []
+                newTextPosts.push(...action.result)
+                return {...state, posts: newTextPosts, loading: false, error: null}
+            } else return Array.isArray(state.posts) ? {...state, posts: [...action.result, ...state.posts], loading: false, error: null} : {...state, posts: []}
+        case 'likePost':
+
+        case 'unlikePost':
+
+        default:
+            throw new Error((action.type + ' is not a valid action for textPostReducer'))
+    }
+}
+
+const imagePostReducerInitialState = {
+    posts: null,
+    error: null,
+    loading: false
+}
+
 const Profile = () => {
     const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext)
     const { FlexRowCentreDiv, FlexColumnCentreDiv, FlexRowSpaceAroundDiv, H3NoMargin } = useComponent()
-    const {name, followers, following, profileImageKey, _id} = storedCredentials;
+    const {name, followers, following, profileImageKey, _id, publicId} = storedCredentials;
     const [view, setView] = useState('textPosts')
-    const [textPosts, setTextPosts] = useState(null)
-    const [loadingTextPosts, setLoadingTextPosts] = useState(false)
-    const [loadingTextPostsError, setLoadingTextPostsError] = useState(null)
-    const [imagePosts, setImagePosts] = useState(null)
-    const [loadingImagePosts, setLoadingImagePosts] = useState(false)
-    const [loadingImagePostsError, setLoadingImagePostsError] = useState(null)
     const [openProfileImageFileSelector, { plainFiles: profileImageToUpload, loading: profileImageFileLoading}] = useFilePicker({accept: 'image/jpeg', multiple: false})
     const [profileImageUploading, setProfileImageUploading] = useState(false);
     const {darkMode, setDarkMode} = useContext(DarkModeContext);
+    const [textPostState, dispatchTextPostUpdate] = useReducer(textPostReducer, textPostReducerInitialState)
+    const [imagePostState, dispatchImagePostUpdate] = useReducer(imagePostReducer, imagePostReducerInitialState)
 
     const loadPosts = {
         textPosts: () => {
-            if (loadingTextPosts === false) {
-                setLoadingTextPosts(true)
-                setLoadingTextPostsError(null)
+            if (textPostState.loading === false) {
+                dispatchTextPostUpdate({type: 'nowLoading'})
 
-                axios.get(`http://localhost:8080/user/textPostsByUserName/?username=${name}&skip=${Array.isArray(textPosts) ? textPosts.length : 0}`)
+                axios.get(`http://localhost:8080/user/textPostsByUserName/?username=${name}&skip=${Array.isArray(textPostState.posts) ? textPostState.posts.length : 0}&publicId=${publicId}`)
                 .then(response => response.data.data)
                 .then(result => {
-                    console.log(result)
-                    setTextPosts(posts => {
-                        if (Array.isArray(result) && result.length > 0) {
-                            const newTextPosts = Array.isArray(posts) ? _.cloneDeep(posts) : []
-                            newTextPosts.push(...result)
-                            return newTextPosts
-                        } else return Array.isArray(posts) ? [...result, ...posts] : []
+                    dispatchTextPostUpdate({
+                        type: 'addPosts',
+                        result
                     })
-                    setLoadingTextPosts(false)
-                    setLoadingTextPostsError(null)
                 })
                 .catch(error => {
-                    setLoadingTextPosts(false)
-                    setLoadingTextPostsError(error?.response?.data?.error || String(error))
-                    console.error(error)
+                    dispatchTextPostUpdate({
+                        type: 'error',
+                        error: error?.response?.data?.error || String(error)
+                    })
                 })
             }
         },
         imagePosts: () => {
-            if (loadingImagePosts === false) {
-                setLoadingImagePosts(true)
-                setLoadingImagePostsError(null)
+            if (imagePostState.loading === false) {
+                dispatchImagePostUpdate({type: 'nowLoading'})
 
-                axios.get(`http://localhost:8080/user/imagePostsByUserName/?username=${name}&skip=${Array.isArray(imagePosts) ? imagePosts.length : 0}`)
+                axios.get(`http://localhost:8080/user/imagePostsByUserName/?username=${name}&skip=${Array.isArray(imagePostState.posts) ? imagePostState.posts.length : 0}&publicId=${publicId}`)
                 .then(response => response.data.data)
                 .then(result => {
-                    console.log(result)
-                    setImagePosts(posts => {
-                        if (Array.isArray(result) && result.length > 0) {
-                            const newImagePosts = Array.isArray(posts) ? _.cloneDeep(posts) : []
-                            newImagePosts.push(...result)
-                            return newImagePosts
-                        } else return Array.isArray(posts) ? [...result, ...posts] : []
+                    dispatchImagePostUpdate({
+                        type: 'addPosts',
+                        result
                     })
-                    setLoadingImagePosts(false)
-                    setLoadingImagePostsError(null)
                 }).catch(error => {
-                    setLoadingImagePosts(false)
-                    setLoadingImagePostsError(error?.response?.data?.error || String(error))
-                    console.error(error)
+                    dispatchImagePostUpdate({
+                        type: 'error',
+                        error: error?.response?.data?.error || String(error)
+                    })
                 })
             }
         }
@@ -91,8 +133,8 @@ const Profile = () => {
     const handleViewChange = (event, nextView) => {
         if (nextView !== view && nextView !== null) {
             setView(nextView)
-            if (nextView === 'textPosts' && textPosts === null) loadPosts.textPosts()
-            if (nextView === 'imagePosts' && imagePosts === null) loadPosts.imagePosts()
+            if (nextView === 'textPosts' && textPostState.posts === null) loadPosts.textPosts()
+            if (nextView === 'imagePosts' && imagePostState.posts === null) loadPosts.imagePosts()
         }
         if (nextView === null) {
             loadPosts[view]();
@@ -100,20 +142,20 @@ const Profile = () => {
     }
 
     const DisplayTextPosts = useMemo(() => {
-        return Array.isArray(textPosts) ? textPosts.map((post, index) => (
+        return Array.isArray(textPostState.posts) ? textPostState.posts.map((post, index) => (
             <Fragment key={index.toString()}>
                 <TextPost {...post}/>
             </Fragment>
         )) : null
-    }, [textPosts])
+    }, [textPostState.posts])
 
     const DisplayImagePosts = useMemo(() => {
-        return Array.isArray(imagePosts) ? imagePosts.map((post, index) => (
+        return Array.isArray(imagePostState.posts) ? imagePostState.posts.map((post, index) => (
             <Fragment key={index.toString()}>
                 <ImagePost {...post}/>
             </Fragment>
         )) : null
-    }, [imagePosts])
+    }, [imagePostState.posts])
 
     useEffect(() => {
         console.log(profileImageToUpload[0])
@@ -183,13 +225,13 @@ const Profile = () => {
             {view === 'textPosts' ?
                 <>
                     {
-                        loadingTextPostsError ?
-                            <h1 style={{color: 'red', textAlign: 'center'}}>{loadingTextPostsError}</h1>
-                        : loadingTextPosts ?
+                        textPostState.error ?
+                            <h1 style={{color: 'red', textAlign: 'center'}}>{textPostState.error}</h1>
+                        : textPostState.loading ?
                             <Box sx={{display: 'flex', justifyContent: 'center', mt: 3}}>
                                 <CircularProgress/>
                             </Box>
-                        : Array.isArray(textPosts) && textPosts.length === 0 ?
+                        : Array.isArray(textPostState.posts) && textPostState.posts.length === 0 ?
                             <h1 style={{textAlign: 'center'}}>{name} has no text posts.</h1>
                         :
                             <Grid container spacing={2}>
@@ -200,13 +242,13 @@ const Profile = () => {
             : view === 'imagePosts' ?
                 <>
                     {
-                        loadingImagePostsError ?
-                            <h1 style={{color: 'red', textAlign: 'center'}}>{loadingImagePostsError}</h1>
-                        : loadingImagePosts ? 
+                        imagePostState.error ?
+                            <h1 style={{color: 'red', textAlign: 'center'}}>{imagePostState.error}</h1>
+                        : imagePostState.loading ? 
                             <Box sx={{display: 'flex', justifyContent: 'center', mt: 3}}>
                                 <CircularProgress/>
                             </Box>
-                        : Array.isArray(imagePosts) && imagePosts.length === 0 ?
+                        : Array.isArray(imagePostState.posts) && imagePostState.posts.length === 0 ?
                             <h1 style={{textAlign: 'center'}}>{name} has no image posts.</h1>
                         :
                             <Grid container spacing={2}>
