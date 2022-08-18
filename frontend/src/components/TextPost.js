@@ -7,7 +7,7 @@ import { faHeart as fasHeart } from '@fortawesome/free-solid-svg-icons';
 import Button from '@mui/material/Button'
 import axios from 'axios';
 
-const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch, userId}) => {
+const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch, userId, editMode}) => {
     const {darkMode, setDarkMode} = useContext(DarkModeContext);
     const changingLikeStatus = useRef(false)
     const deleting = useRef(false)
@@ -51,6 +51,14 @@ const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch, u
     }
 
     const editPost = () => {
+        dispatch({type: 'turnOnEditMode', postId})
+    }
+
+    const revertEdits = () => {
+        dispatch({type: 'turnOffEditMode', postId})
+    }
+
+    const saveEdits = () => {
         alert('Coming soon')
     }
 
@@ -66,16 +74,25 @@ const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch, u
             <div style={{border: `1px solid ${darkMode ? 'white' : 'black'}`, padding: 10}}>
                 <h1>{title}</h1>
                 <p>{body}</p>
-                <FontAwesomeIcon 
-                    icon={liked ? fasHeart : farHeart}
-                    style={{color: liked ? 'red' : darkMode ? 'white' : 'black', cursor: 'pointer', fontSize: 30}}
-                    onClick={() => {
-                        if (changingLikeStatus.current === false) toggleLike()
-                    }}
-                />
-                <br/>
-                <Button color="secondary" variant="contained" sx={{mt: 1, mr: 1}} onClick={deletePost}>Delete</Button>
-                <Button color="secondary" variant="contained" sx={{mt: 1}} onClick={editPost}>Edit</Button>
+                {editMode ?
+                    <>
+                        <Button color="error" variant="outlined" sx={{mt: 1, mr: 1}} onClick={revertEdits}>Revert</Button>
+                        <Button color="success" variant="outlined" sx={{mt: 1}} onClick={saveEdits}>Save</Button>
+                    </>
+                :
+                    <>
+                        <FontAwesomeIcon 
+                            icon={liked ? fasHeart : farHeart}
+                            style={{color: liked ? 'red' : darkMode ? 'white' : 'black', cursor: 'pointer', fontSize: 30}}
+                            onClick={() => {
+                                if (changingLikeStatus.current === false) toggleLike()
+                            }}
+                        />
+                        <br/>
+                        <Button color="secondary" variant="contained" sx={{mt: 1, mr: 1}} onClick={deletePost}>Delete</Button>
+                        <Button color="secondary" variant="contained" sx={{mt: 1}} onClick={editPost}>Edit</Button>
+                    </>
+                }
             </div>
         </Grid>
     )

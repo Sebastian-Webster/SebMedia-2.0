@@ -71,6 +71,26 @@ const Profile = () => {
                 newPostsAfterDelete.splice(deletePostIndex, 1)
 
                 return {...state, posts: newPostsAfterDelete, reRenderTimes: state.reRenderTimes + 1}
+            case 'turnOnEditMode':
+                const turnOnEditIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (turnOnEditIndex === -1) {
+                    alert('Cannot find post to edit')
+                    return {...state}
+                }
+
+                const newPostsAfterTurningEditModeOn = state.posts;
+                newPostsAfterTurningEditModeOn[turnOnEditIndex].editMode = true;
+                return {...state, posts: newPostsAfterTurningEditModeOn, reRenderTimes: state.reRenderTimes + 1}
+            case 'turnOffEditMode':
+                const turnOffEditIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (turnOffEditIndex === -1) {
+                    alert('Cannot find post to edit')
+                    return {...state}
+                }
+
+                const newPostsAfterTurningEditModeOff = state.posts;
+                newPostsAfterTurningEditModeOff[turnOffEditIndex].editMode = false;
+                return {...state, posts: newPostsAfterTurningEditModeOff, reRenderTimes: state.reRenderTimes + 1}
             default:
                 throw new Error((action.type + ' is not a valid action for textPostReducer'))
         }
@@ -130,6 +150,26 @@ const Profile = () => {
                 newPostsAfterDelete.splice(deletePostIndex, 1)
 
                 return {...state, posts: newPostsAfterDelete, reRenderTimes: state.reRenderTimes + 1}
+            case 'turnOnEditMode':
+                const turnOnEditIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (turnOnEditIndex === -1) {
+                    alert('Cannot find post to edit')
+                    return {...state}
+                }
+
+                const newPostsAfterTurningEditModeOn = state.posts;
+                newPostsAfterTurningEditModeOn[turnOnEditIndex].editMode = true;
+                return {...state, posts: newPostsAfterTurningEditModeOn, reRenderTimes: state.reRenderTimes + 1}
+            case 'turnOffEditMode':
+                const turnOffEditIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (turnOffEditIndex === -1) {
+                    alert('Cannot find post to edit')
+                    return {...state}
+                }
+
+                const newPostsAfterTurningEditModeOff = state.posts;
+                newPostsAfterTurningEditModeOff[turnOffEditIndex].editMode = false;
+                return {...state, posts: newPostsAfterTurningEditModeOff, reRenderTimes: state.reRenderTimes + 1}
             default:
                 throw new Error((action.type + ' is not a valid action for textPostReducer'))
         }
