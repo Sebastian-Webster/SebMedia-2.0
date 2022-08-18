@@ -4,11 +4,13 @@ import { DarkModeContext } from '../context/DarkModeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
 import { faHeart as fasHeart } from '@fortawesome/free-solid-svg-icons';
+import Button from '@mui/material/Button'
 import axios from 'axios';
 
-const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch}) => {
+const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch, userId}) => {
     const {darkMode, setDarkMode} = useContext(DarkModeContext);
     const changingLikeStatus = useRef(false)
+    const deleting = useRef(false)
     const NetworkRequestController = new AbortController();
 
     const toggleLike = () => {
@@ -35,6 +37,23 @@ const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch}) 
         }
     }
 
+    const deletePost = () => { //Self-destruct :-)
+        if (deleting.current === false) {
+            deleting.current = true;
+            axios.delete('http://localhost:8080/user/textPost', {data: {userId, postId}, signal: NetworkRequestController.signal}).then(() => {
+                deleting.current = false;
+                dispatch({type: 'deletePost', postId})
+            }).catch(error => {
+                alert(error?.response?.data?.error || String(error))
+                deleting.current = false
+            })
+        }
+    }
+
+    const editPost = () => {
+        alert('Coming soon')
+    }
+
     useEffect(() => {
         return () => {
             //When the component gets unloaded, abort any network requests that haven't completed yet
@@ -54,6 +73,9 @@ const TextPost = ({title, body, datePosted, liked, publicId, postId, dispatch}) 
                         if (changingLikeStatus.current === false) toggleLike()
                     }}
                 />
+                <br/>
+                <Button color="secondary" variant="contained" sx={{mt: 1, mr: 1}} onClick={deletePost}>Delete</Button>
+                <Button color="secondary" variant="contained" sx={{mt: 1}} onClick={editPost}>Edit</Button>
             </div>
         </Grid>
     )

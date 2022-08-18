@@ -42,7 +42,7 @@ const Profile = () => {
                 const likePostIndex = state.posts.findIndex(item => item.postId === action.postId)
                 if (likePostIndex === -1) {
                     alert('Cannot find post to like')
-                    return
+                    return {...state}
                 }
 
                 const newPostsAfterLike = state.posts;
@@ -52,14 +52,25 @@ const Profile = () => {
             case 'unlikePost':
                 const unlikePostIndex = state.posts.findIndex(item => item.postId === action.postId)
                 if (unlikePostIndex === -1) {
-                    alert('Cannot find post to like')
-                    return
+                    alert('Cannot find post to unlike')
+                    return {...state}
                 }
                 
                 const newPostsAfterUnlike = state.posts;
                 newPostsAfterUnlike[unlikePostIndex].liked = false;
                 
                 return {...state, posts: newPostsAfterUnlike, reRenderTimes: state.reRenderTimes + 1}
+            case 'deletePost':
+                const deletePostIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (deletePostIndex === -1) {
+                    alert('Cannot find post to delete')
+                    return {...state}
+                }
+
+                const newPostsAfterDelete = state.posts;
+                newPostsAfterDelete.splice(deletePostIndex, 1)
+
+                return {...state, posts: newPostsAfterDelete, reRenderTimes: state.reRenderTimes + 1}
             default:
                 throw new Error((action.type + ' is not a valid action for textPostReducer'))
         }
@@ -108,6 +119,17 @@ const Profile = () => {
                 newPostsAfterUnlike[unlikePostIndex].liked = false;
                 
                 return {...state, posts: newPostsAfterUnlike, reRenderTimes: state.reRenderTimes + 1}
+            case 'deletePost':
+                const deletePostIndex = state.posts.findIndex(item => item.postId === action.postId)
+                if (deletePostIndex === -1) {
+                    alert('Cannot find post to delete')
+                    return {...state}
+                }
+
+                const newPostsAfterDelete = state.posts;
+                newPostsAfterDelete.splice(deletePostIndex, 1)
+
+                return {...state, posts: newPostsAfterDelete, reRenderTimes: state.reRenderTimes + 1}
             default:
                 throw new Error((action.type + ' is not a valid action for textPostReducer'))
         }
@@ -183,7 +205,7 @@ const Profile = () => {
     const DisplayTextPosts = useMemo(() => {
         return Array.isArray(textPostState.posts) ? textPostState.posts.map((post, index) => (
             <Fragment key={index.toString()}>
-                <TextPost {...post} publicId={publicId} dispatch={dispatchTextPostUpdate}/>
+                <TextPost {...post} publicId={publicId} dispatch={dispatchTextPostUpdate} userId={_id}/>
             </Fragment>
         )) : null
     }, [textPostState.posts, textPostState.reRenderTimes])
@@ -191,7 +213,7 @@ const Profile = () => {
     const DisplayImagePosts = useMemo(() => {
         return Array.isArray(imagePostState.posts) ? imagePostState.posts.map((post, index) => (
             <Fragment key={index.toString()}>
-                <ImagePost {...post} publicId={publicId} dispatch={dispatchImagePostUpdate}/>
+                <ImagePost {...post} publicId={publicId} dispatch={dispatchImagePostUpdate} userId={_id}/>
             </Fragment>
         )) : null
     }, [imagePostState.posts, imagePostState.reRenderTimes])

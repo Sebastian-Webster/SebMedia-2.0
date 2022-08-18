@@ -4,11 +4,13 @@ import { DarkModeContext } from '../context/DarkModeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
 import { faHeart as fasHeart } from '@fortawesome/free-solid-svg-icons';
+import Button from '@mui/material/Button'
 import axios from 'axios';
 
-const ImagePost = ({title, body, datePosted, imageKey, previewImage, liked, publicId, postId, dispatch}) => {
+const ImagePost = ({title, body, datePosted, imageKey, previewImage, liked, publicId, postId, dispatch, userId}) => {
     const {darkMode, setDarkMode} = useContext(DarkModeContext)
     const changingLikeStatus = useRef(false)
+    const deleting = useRef(false)
     const NetworkRequestController = new AbortController();
 
     const toggleLike = () => {
@@ -35,6 +37,19 @@ const ImagePost = ({title, body, datePosted, imageKey, previewImage, liked, publ
         }
     }
 
+    const deletePost = () => {
+        if (deleting.current === false) {
+            deleting.current = true;
+            axios.delete('http://localhost:8080/user/imagePost', {data: {userId, postId}, signal: NetworkRequestController.signal}).then(() => {
+                deleting.current = false;
+                dispatch({type: 'deletePost', postId})
+            }).catch(error => {
+                alert(error?.response?.data?.error || String(error))
+                deleting.current = false
+            })
+        }
+    }
+
     useEffect(() => {
         return () => {
             //When the component gets unloaded, abort any network requests that haven't completed yet
@@ -48,6 +63,7 @@ const ImagePost = ({title, body, datePosted, imageKey, previewImage, liked, publ
                 <h1>{title}</h1>
                 <p>{body}</p>
                 <img src={previewImage ? previewImage : `http://localhost:8080/image/${imageKey}`} style={{maxHeight: '100%', maxWidth: '100%'}}/>
+                <br/>
                 <FontAwesomeIcon 
                     icon={liked ? fasHeart : farHeart}
                     style={{color: liked ? 'red' : darkMode ? 'white' : 'black', cursor: 'pointer', fontSize: 30}}
@@ -55,6 +71,8 @@ const ImagePost = ({title, body, datePosted, imageKey, previewImage, liked, publ
                         if (changingLikeStatus.current === false) toggleLike()
                     }}
                 />
+                <br/>
+                <Button color="secondary" variant="contained" sx={{mt: 1}} onClick={deletePost}>Delete</Button>
             </div>
         </Grid>
     )

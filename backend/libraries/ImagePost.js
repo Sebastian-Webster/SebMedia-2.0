@@ -12,7 +12,6 @@ class ImagePostLibrary {
                     delete toReturn.likes
                     return toReturn
                 })
-                console.log(toResolve)
                 resolve(toResolve)
             }).catch(error => {
                 reject(error)
@@ -42,6 +41,22 @@ class ImagePostLibrary {
         } catch (error) {
             return {error}
         }
+    }
+
+    checkIfUserIsPostOwner = async (userId, postId) => {
+        try {
+            const post = await this.findPostById(postId)
+            if (post.error) return {error: post.error}
+            return String(post.creatorId) === userId
+        } catch (error) {
+            return {error}
+        }
+    }
+
+    deletePostById = (postId) => {
+        return new Promise((resolve, reject) => {
+            ImagePost.deleteOne({_id: postId}).then(() => resolve()).catch(error => reject(error))
+        })
     }
 }
 

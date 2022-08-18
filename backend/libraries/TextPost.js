@@ -46,6 +46,22 @@ class TextPostLibrary {
             return {error}
         }
     }
+
+    checkIfUserIsPostOwner = async (userId, postId) => {
+        try {
+            const post = await this.findPostById(postId)
+            if (post.error) return {error: post.error}
+            return String(post.creatorId) === userId
+        } catch (error) {
+            return {error}
+        }
+    }
+
+    deletePostById = (postId) => {
+        return new Promise((resolve, reject) => {
+            TextPost.deleteOne({_id: postId}).then(() => resolve()).catch(error => reject(error))
+        })
+    }
 }
 
 module.exports = TextPostLibrary;

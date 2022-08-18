@@ -634,6 +634,74 @@ const unlikeTextPost = async (req, res) => {
     })
 }
 
+const deleteImagePost = async (req, res) => {
+    const {userId, postId} = req.body;
+
+    if (!isValidObjectId(userId)) {
+        http.BadInput(res, 'userId must be a valid ObjectId')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const isOwner = await ImagePost.checkIfUserIsPostOwner(userId, postId)
+
+    if (typeof isOwner === 'object' && isOwner.error) {
+        logger.error(isOwner.error)
+        http.ServerError(res, 'An error occured while deleting image post. Please try again later.')
+        return
+    }
+
+    if (!isOwner) {
+        http.NotAuthorized(res, 'You are not authorized to delete this image post.')
+        return
+    }
+
+    ImagePost.deletePostById(postId).then(() => {
+        http.OK(res, 'Post successfully deleted.')
+    }).catch(error => {
+        http.ServerError(res, 'An error occured while deleting iamge post. Please try again later.')
+        logger.error(error)
+    })
+}
+
+const deleteTextPost = async (req, res) => {
+    const {userId, postId} = req.body;
+
+    if (!isValidObjectId(userId)) {
+        http.BadInput(res, 'userId must be a valid ObjectId')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const isOwner = await TextPost.checkIfUserIsPostOwner(userId, postId)
+
+    if (typeof isOwner === 'object' && isOwner.error) {
+        logger.error(error)
+        http.ServerError(res, 'An error occured while deleting the text post. Please try again later.')
+        return
+    }
+
+    if (!isOwner) {
+        http.NotAuthorized(res, 'You are not authorized to delete this text post.')
+        return
+    }
+
+    TextPost.deletePostById(postId).then(() => {
+        http.OK(res, 'Post successfully deleted.')
+    }).catch(error => {
+        http.ServerError(res, 'An error occured while deleting the text post. Please try again later.')
+        logger.error(error)
+    })
+}
+
 module.exports = {
     login,
     signup,
@@ -645,5 +713,7 @@ module.exports = {
     likeImagePost,
     unlikeImagePost,
     likeTextPost,
-    unlikeTextPost
+    unlikeTextPost,
+    deleteImagePost,
+    deleteTextPost
 }

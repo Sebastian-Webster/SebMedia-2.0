@@ -27,6 +27,13 @@ class HTTPHandler {
             })
         }
     }
+
+    NotAuthorized(res, error) {
+        res.status(401).json({
+            status: "FAILED",
+            error
+        })
+    }
 }
 
 module.exports = HTTPHandler;

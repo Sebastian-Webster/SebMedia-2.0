@@ -11,7 +11,9 @@ const {
     likeImagePost,
     unlikeImagePost,
     likeTextPost,
-    unlikeTextPost
+    unlikeTextPost,
+    deleteTextPost,
+    deleteImagePost
 } = require('../controllers/User')
 const multer = require('multer')
 const path = require('path')
@@ -78,6 +80,14 @@ router.post('/likeTextPost', (req, res) => {
 
 router.post('/unlikeTextPost', (req, res) => {
     unlikeTextPost(req, res)
+})
+
+router.delete('/textPost', (req, res) => {
+    deleteTextPost(req, res)
+})
+
+router.delete('/imagePost', (req, res) => {
+    deleteImagePost(req, res)
 })
 
 module.exports = router;
