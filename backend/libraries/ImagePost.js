@@ -12,6 +12,7 @@ class ImagePostLibrary {
                     delete toReturn.likes
                     return toReturn
                 })
+                console.log(toResolve)
                 resolve(toResolve)
             }).catch(error => {
                 reject(error)
@@ -20,11 +21,27 @@ class ImagePostLibrary {
     }
 
     likePost = (postId, userPublicId) => {
-        //Coming soon
+        return new Promise((resolve, reject) => {
+            ImagePost.findOneAndUpdate({_id: postId}, {$push: {likes: userPublicId}})
+            .then(() => resolve())
+            .catch(error => reject(error))
+        })
     }
 
     unlikePost = (postId, userPublicId) => {
-        //Coming soon
+        return new Promise((resolve, reject) => {
+            ImagePost.findOneAndUpdate({_id: postId}, {$pull: {likes: userPublicId}})
+            .then(() => resolve())
+            .catch(error => reject(error))
+        })
+    }
+
+    findPostById = async (id) => {
+        try {
+            return await ImagePost.findOne({_id: id})
+        } catch (error) {
+            return {error}
+        }
     }
 }
 

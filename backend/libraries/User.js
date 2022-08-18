@@ -48,10 +48,18 @@ class UserLibrary {
         }
     }
 
-    findUserByPublicId = async(publicId) => {
+    findUserByPublicId = async (publicId) => {
         try {
             return await User.findOne({publicId})
         } catch (error) {
+            return {error}
+        }
+    }
+
+    findUserById = async (id) => {
+        try {
+            return await User.findOne({id})
+        } catch(error) {
             return {error}
         }
     }

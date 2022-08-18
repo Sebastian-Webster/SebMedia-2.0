@@ -56,7 +56,7 @@ const login = async (req, res) => {
                 following: LoginResponse.following,
                 _id: LoginResponse._id,
                 profileImageKey: LoginResponse.profileImageKey,
-                publicId: LoginResponse._publicId
+                publicId: LoginResponse.publicId
             })
         } else {
             http.BadInput(res, 'Wrong password.')
@@ -251,11 +251,6 @@ const getTextPostsByUserName = async (req, res) => {
         return
     }
 
-    if (!isValidObjectId(publicId)) {
-        http.BadInput(res, 'publicId is not a valid object id')
-        return
-    }
-
     skip = parseInt(skip)
 
     if (skip === NaN) {
@@ -290,7 +285,7 @@ const getTextPostsByUserName = async (req, res) => {
 
     TextPost.findPostsByCreatorId(foundUserByName._id, limit, skip, publicId).then(result => {
         //Get rid of object IDs
-        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, liked: post.liked}))
+        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, liked: post.liked, postId: post._id}))
         http.OK(res, 'Successfully found posts', cleanedResult)
     }).catch(error => {
         http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
@@ -369,10 +364,6 @@ const getImagePostsByUserName = async (req, res) => {
         return
     }
 
-    if (!isValidObjectId(publicId)) {
-        http.BadInput(res, 'publicId is not a valid object id')
-    }
-
     skip = parseInt(skip)
 
     if (skip === NaN) {
@@ -402,11 +393,12 @@ const getImagePostsByUserName = async (req, res) => {
     if (foundUserByPublicId.error) {
         http.ServerError(res, 'An error ocucred while fetching image posts. Please try again later.')
         logger.error(foundUserByPublicId.error)
+        return
     }
 
     ImagePost.findPostsByCreatorId(foundUserByName._id, limit, skip, publicId).then(result => {
         //Get rid of object IDs
-        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, imageKey: post.imageKey, liked: post.liked}))
+        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, imageKey: post.imageKey, liked: post.liked, postId: post._id}))
         http.OK(res, 'Successfully found posts', cleanedResult)
     }).catch(error => {
         http.ServerError(res, 'An error occured while fetching image posts. Please try again later.')
@@ -414,7 +406,7 @@ const getImagePostsByUserName = async (req, res) => {
     })
 }
 
-const updateProfileImage = (req, res) => {
+const updateProfileImage = async (req, res) => {
     const userId = req.body._id;
     if (!req.file) {
         http.BadInput(res, 'No file received.')
@@ -423,6 +415,19 @@ const updateProfileImage = (req, res) => {
 
     if (!isValidObjectId(userId)) {
         http.BadInput(res, '_id is not a valid user ID.')
+        return
+    }
+
+    const userFoundById = await user.findUserById(userId)
+
+    if (userFoundById === null) {
+        http.BadInput(res, 'Could not find user with id.')
+        return
+    }
+
+    if (userFoundById.error) {
+        res.ServerError(res, 'An error occured while updating profile image. Please try again later.')
+        logger.error(userFoundById.error)
         return
     }
 
@@ -436,6 +441,199 @@ const updateProfileImage = (req, res) => {
     })
 }
 
+const likeImagePost = async (req, res) => {
+    const userPublicId = req?.body?.publicId
+    const postId = req?.body?.postId
+
+    if (typeof userPublicId !== 'string') {
+        http.BadInput(res, 'userPublicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const UserFoundByPublicId = await user.findUserByPublicId(userPublicId)
+
+    if (UserFoundByPublicId === null) {
+        http.BadInput(res, 'User was not found with provided public id.')
+        return
+    }
+
+    if (UserFoundByPublicId.error) {
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+        logger.error(error)
+        return
+    }
+
+    const PostFoundWithId = await ImagePost.findPostById(postId)
+
+    if (PostFoundWithId === null) {
+        http.BadInput(res, 'Image post was not found with provided postId')
+        return
+    }
+
+    if (PostFoundWithId.error) {
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+        return
+    }
+
+    ImagePost.likePost(postId, userPublicId)
+    .then(() => {
+        http.OK(res, 'Post has successfully been liked.')
+    })
+    .catch(error => {
+        logger.error(error)
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+    })
+}
+
+const unlikeImagePost = async (req, res) => {
+    const userPublicId = req?.body?.publicId
+    const postId = req?.body?.postId
+
+    if (typeof userPublicId !== 'string') {
+        http.BadInput(res, 'userPublicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const UserFoundByPublicId = await user.findUserByPublicId(userPublicId)
+
+    if (UserFoundByPublicId === null) {
+        http.BadInput(res, 'User was not found with provided public id.')
+        return
+    }
+
+    if (UserFoundByPublicId.error) {
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+        logger.error(error)
+        return
+    }
+
+    const PostFoundWithId = await ImagePost.findPostById(postId)
+
+    if (PostFoundWithId === null) {
+        http.BadInput(res, 'Image post was not found with provided postId')
+        return
+    }
+
+    if (PostFoundWithId.error) {
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+    }
+
+    ImagePost.unlikePost(postId, userPublicId)
+    .then(() => {
+        http.OK(res, 'Post has successfully been unliked.')
+    })
+    .catch(error => {
+        logger.error(error)
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+    })
+}
+
+const likeTextPost = async (req, res) => {
+    const userPublicId = req?.body?.publicId
+    const postId = req?.body?.postId
+
+    if (typeof userPublicId !== 'string') {
+        http.BadInput(res, 'userPublicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const UserFoundByPublicId = await user.findUserByPublicId(userPublicId)
+
+    if (UserFoundByPublicId === null) {
+        http.BadInput(res, 'User was not found with provided public id.')
+        return
+    }
+
+    if (UserFoundByPublicId.error) {
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+        logger.error(error)
+        return
+    }
+
+    const PostFoundWithId = await TextPost.findPostById(postId)
+
+    if (PostFoundWithId === null) {
+        http.BadInput(res, 'Text post was not found with provided postId')
+        return
+    }
+
+    if (PostFoundWithId.error) {
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+    }
+
+    TextPost.likePost(postId, userPublicId)
+    .then(() => {
+        http.OK(res, 'Post has successfully been liked.')
+    })
+    .catch(error => {
+        logger.error(error)
+        http.ServerError(res, 'An error occured while liking the post. Please try again later.')
+    })
+}
+
+const unlikeTextPost = async (req, res) => {
+    const userPublicId = req?.body?.publicId
+    const postId = req?.body?.postId
+
+    if (typeof userPublicId !== 'string') {
+        http.BadInput(res, 'userPublicId must be a string')
+        return
+    }
+
+    if (!isValidObjectId(postId)) {
+        http.BadInput(res, 'postId must be a valid ObjectId')
+        return
+    }
+
+    const UserFoundByPublicId = await user.findUserByPublicId(userPublicId)
+
+    if (UserFoundByPublicId === null) {
+        http.BadInput(res, 'User was not found with provided public id.')
+        return
+    }
+
+    if (UserFoundByPublicId.error) {
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+        logger.error(error)
+        return
+    }
+
+    const PostFoundWithId = await TextPost.findPostById(postId)
+
+    if (PostFoundWithId === null) {
+        http.BadInput(res, 'Text post was not found with provided postId')
+        return
+    }
+
+    if (PostFoundWithId.error) {
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+    }
+
+    TextPost.unlikePost(postId, userPublicId)
+    .then(() => {
+        http.OK(res, 'Post has successfully been unliked.')
+    })
+    .catch(error => {
+        logger.error(error)
+        http.ServerError(res, 'An error occured while unliking the post. Please try again later.')
+    })
+}
+
 module.exports = {
     login,
     signup,
@@ -443,5 +641,9 @@ module.exports = {
     getTextPostsByUserName,
     uploadImagePost,
     getImagePostsByUserName,
-    updateProfileImage
+    updateProfileImage,
+    likeImagePost,
+    unlikeImagePost,
+    likeTextPost,
+    unlikeTextPost
 }

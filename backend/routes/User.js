@@ -7,7 +7,11 @@ const {
     getTextPostsByUserName, 
     uploadImagePost, 
     getImagePostsByUserName,
-    updateProfileImage
+    updateProfileImage,
+    likeImagePost,
+    unlikeImagePost,
+    likeTextPost,
+    unlikeTextPost
 } = require('../controllers/User')
 const multer = require('multer')
 const path = require('path')
@@ -58,6 +62,22 @@ router.get('/imagePostsByUserName', (req, res) => {
 
 router.post('/updateProfileImage', upload.single('image'), async (req, res) => {
     updateProfileImage(req, res)
+})
+
+router.post('/likeImagePost', (req, res) => {
+    likeImagePost(req, res)
+})
+
+router.post('/unlikeImagePost', (req, res) => {
+    unlikeImagePost(req, res)
+})
+
+router.post('/likeTextPost', (req, res) => {
+    likeTextPost(req, res)
+})
+
+router.post('/unlikeTextPost', (req, res) => {
+    unlikeTextPost(req, res)
 })
 
 module.exports = router;

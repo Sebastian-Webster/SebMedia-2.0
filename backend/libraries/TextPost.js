@@ -20,11 +20,31 @@ class TextPostLibrary {
     }
 
     likePost = (postId, userPublicId) => {
-        //Coming soon
+        return new Promise((resolve, reject) => {
+            TextPost.findOne({_id: postId}).then(postFound => {
+                if (!postFound.likes.includes(userPublicId)) {
+                    TextPost.findOneAndUpdate({_id: postId}, {$push: {likes: userPublicId}}).then(() => {
+                        resolve()
+                    }).catch(error => reject(error))
+                } else reject('User with public id has already liked this post')
+            }).catch(error => reject(error))
+        })
     }
 
     unlikePost = (postId, userPublicId) => {
-        //Coming soon
+        return new Promise((resolve, reject) => {
+            TextPost.findOneAndUpdate({_id: postId}, {$pull: {likes: userPublicId}})
+            .then(() => resolve())
+            .catch(error => reject(error))
+        })
+    }
+
+    findPostById = async (id) => {
+        try {
+            return await TextPost.findOne({_id: id})
+        } catch (error) {
+            return {error}
+        }
     }
 }
 
