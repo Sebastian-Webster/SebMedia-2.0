@@ -1,21 +1,28 @@
 const TextPost = require('../models/TextPost')
+const User = require('./User')
+const user = new User();
 
 class TextPostLibrary {
-    findPostsByCreatorId = (creatorId, limit, skip, viewerId) => {
+    findPostsByCreatorId = (creatorId) => {
         return new Promise((resolve, reject) => {
-            TextPost.find({creatorId}).skip(skip).limit(limit).then(result => {
-                const toResolve = result.map(item => {
-                    const toReturn = {
-                        ...item._doc,
-                        liked: item.likes.includes(viewerId)
-                    }
-                    delete toReturn.likes
-                    return toReturn
-                })
-                resolve(toResolve)
-            }).catch(error => {
-                reject(error)
-            })
+            TextPost.find({creatorId}).then(resolve).catch(reject)
+        })
+    }
+
+    prepareDataToSendToUser = (posts, cached, publicId) => {
+        return new Promise((resolve, reject) => {
+            const tempArray = []
+            for (const item of posts) {
+                const {_id, creatorId, likes, __v, ...cleanResult} = item;
+                cleanResult.liked = user.checkIfUserLikedPost(likes, publicId)
+                if (typeof cleanResult.liked !== 'boolean') {
+                    reject(cleanResult.liked) //Reject because cleanResult.liked is an error
+                }
+                cleanResult.cached = cached;
+                cleanResult.postId = _id;
+                tempArray.push(cleanResult)
+            }
+            resolve(tempArray)
         })
     }
 

@@ -91,6 +91,14 @@ class UserLibrary {
             .catch(error => reject(error))
         })
     }
+
+    checkIfUserLikedPost = (likes, publicId) => {
+        try {
+            return likes.includes(publicId)
+        } catch (error) {
+            return {error}
+        }
+    }
 }
 
 module.exports = UserLibrary

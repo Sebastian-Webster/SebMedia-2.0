@@ -1,16 +1,20 @@
 const isValidObjectId = require('mongoose').isValidObjectId;
-const UserLibrary = require('../libraries/User')
-const HTTPHandler = require('../libraries/HTTPHandler')
-const LoggerLibrary = require('../libraries/Logger')
+const UserLibrary = require('../libraries/User');
+const HTTPHandler = require('../libraries/HTTPHandler');
+const LoggerLibrary = require('../libraries/Logger');
 const TextPostLibrary = require('../libraries/TextPost');
-const ImagePostLibrary = require('../libraries/ImagePost')
-const {v4: uuidv4} = require('uuid')
-const user = new UserLibrary()
-const http = new HTTPHandler()
+const ImagePostLibrary = require('../libraries/ImagePost');
+const RedisLibrary = require('../libraries/Redis');
+const GeneralLibrary = require('../libraries/General');
+const {v4: uuidv4} = require('uuid');
+const user = new UserLibrary();
+const http = new HTTPHandler();
 const logger = new LoggerLibrary();
 const TextPost = new TextPostLibrary();
 const ImagePost = new ImagePostLibrary();
-const bcrypt = require('bcrypt')
+const redis = new RedisLibrary();
+const generalLib = new GeneralLibrary();
+const bcrypt = require('bcrypt');
 
 const login = async (req, res) => {
     let email, password;
@@ -283,14 +287,43 @@ const getTextPostsByUserName = async (req, res) => {
         return
     }
 
-    TextPost.findPostsByCreatorId(foundUserByName._id, limit, skip, publicId).then(result => {
-        //Get rid of object IDs
-        const cleanedResult = result.map(post => ({title: post.title, body: post.body, datePosted: post.datePosted, liked: post.liked, postId: post._id}))
-        http.OK(res, 'Successfully found posts', cleanedResult)
-    }).catch(error => {
-        http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
-        logger.error(error)
-    })
+    const redisCacheKey = `textposts-bycreatorid-${foundUserByName._id}`
+
+    const cachedItems = await redis.getCache(redisCacheKey, skip, limit);
+
+    if (cachedItems) {
+        TextPost.prepareDataToSendToUser(cachedItems, true, publicId).then(postsToSend => {
+            http.OK(res, 'Successfully found posts from cache', postsToSend)
+            logger.log('Sent user cached text posts')
+        }).catch(error => {
+            http.ServerError(res, 'An error occured while finding cached text posts.')
+            logger.error(error)
+        })
+    } else {
+        TextPost.findPostsByCreatorId(foundUserByName._id).then(result => {
+            try {
+                redis.setCache(redisCacheKey, result)
+            } catch (error) {
+                logger.error('An error occured while setting cache of text posts for user with ID: ' + foundUserByName._id)
+                logger.error(error)
+            }
+            let postsToSend = result.splice(skip, generalLib.calculateHowManyPostsToSend(result.length, limit, skip))
+            postsToSend = postsToSend.map(post => {
+                const {_doc, ...otherNotWantedStuff} = post
+                return _doc
+            })
+            TextPost.prepareDataToSendToUser(postsToSend, false, publicId).then(postsToSend => {
+                http.OK(res, 'Successfully found posts', postsToSend)
+                logger.log('Sent user non-cached text posts')
+            }).catch(error => {
+                logger.error(error)
+                http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
+            })
+        }).catch(error => {
+            http.ServerError(res, 'An error occured while fetching text posts. Please try again later.')
+            logger.error(error)
+        })
+    }
 }
 
 const uploadImagePost = async (req, res) => {
